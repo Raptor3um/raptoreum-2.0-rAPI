@@ -18,8 +18,11 @@ export default async function getBlockInfo(
     .then((response) => {
       res.json(response.data);
     })
-    .catch(() => {
+    .catch(err => {
       // could also be invalid block height
-      res.status(400).json({ error: 'Failed to fetch block info' });
+      res.status(400).json({
+	      error: 'Failed to fetch block info',
+	      debug_err: (process.env.DEBUG === 'true') ? err : undefined
+      });
     });
 }

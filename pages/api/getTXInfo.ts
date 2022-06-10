@@ -69,7 +69,10 @@ export default function transactionInfo(req, res) {
         res.status(400).json({ error: 'Invalid transaction hash' });
       }
     })
-    .catch(() => {
-      res.status(500).json({ error: 'Failed to fetch transaction info' });
+    .catch(err => {
+      res.status(500).json({
+	      error: 'Failed to fetch transaction info'
+	      debug_err: (process.env.DEBUG === 'true') ? err : undefined
+      });
     });
 }
