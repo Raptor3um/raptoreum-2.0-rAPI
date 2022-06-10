@@ -3,7 +3,7 @@
 ## System Requirements
 - [Node.js 12.22.0](https://nodejs.org/) or later
 - MacOS, Windows (including WSL), or Linux OS
-- Have [`yarn`]() installed
+- Have `yarn` installed
   - [version < 2.0](https://classic.yarnpkg.com/lang/en/docs/install)
   - [version >= 2.0](https://yarnpkg.com/getting-started/install)
   - For all intents and purposes, both will work. [See note](https://yarnpkg.com/getting-started/migration#why-should-you-migrate).
