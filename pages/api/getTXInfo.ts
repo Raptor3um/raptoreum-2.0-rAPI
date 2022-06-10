@@ -71,7 +71,7 @@ export default function transactionInfo(req, res) {
     })
     .catch(err => {
       res.status(500).json({
-	      error: 'Failed to fetch transaction info'
+	      error: 'Failed to fetch transaction info',
 	      debug_err: (process.env.DEBUG === 'true') ? err : undefined
       });
     });
