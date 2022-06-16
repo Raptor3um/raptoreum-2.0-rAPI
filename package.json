@@ -28,6 +28,7 @@
   },
   "homepage": "https://github.com/Raptor3um/raptoreum-2.0-rAPI#readme",
   "dependencies": {
+    "axios": "^0.27.2",
     "express": "^4.18.1"
   },
   "devDependencies": {
