@@ -1,5 +1,4 @@
 import express from "express";
-import InternalRPCException from "./interfaces/InternalRPCException";
 import RPCConnectionManager from "./RPCConnectionManager";
 const app = express();
 const port: Number = 3000;
