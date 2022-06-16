@@ -1,2 +1,3 @@
 # Purely TS project, so any .js files are build artifacts
 *.js
+node_modules
