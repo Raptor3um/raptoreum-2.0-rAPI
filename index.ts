@@ -2,7 +2,7 @@ import express from "express";
 import RPCConnectionManager from "./RPCConnectionManager";
 const app = express();
 const port: Number = 3000;
-const hashrateToDiffRatio: number = 33_376_679.6706;
+const SMARTNODE_COLLATERAL: number = 1_800_000; // 1.8M RTM to run a masternode
 
 const rpcConnectionManager: RPCConnectionManager = new RPCConnectionManager(
   {
@@ -72,7 +72,32 @@ app.get("/blockInfo", async (req, res) => {
       merkleroot: blockInfo.result.merkleroot,
       mediantime: blockInfo.result.mediantime,
       previousblockhash: blockInfo.result.previousblockhash,
-      nextblockhash: blockInfo.result.nextblockhash
+app.get("/blockchainInfo", async (req, res) => {
+  try {
+    const smartnodeInfo = await rpcConnectionManager.sendRequest({
+      method: "smartnode",
+      params: ["count"],
+    });
+    const miningInfo = await rpcConnectionManager.sendRequest({
+      method: "getmininginfo",
+    });
+    res.json({
+      height: miningInfo.result.blocks,
+      difficulty: miningInfo.result.difficulty,
+      hashrate:
+        Intl.NumberFormat("en-US", {
+          notation: "compact",
+          maximumFractionDigits: 3,
+        }).format(miningInfo.result.networkhashps) + "H/s",
+      currentBlockSize: miningInfo.result.currentblocksize,
+      totalSmartnodes: smartnodeInfo.result.total,
+      enabledSmartnodes: smartnodeInfo.result.enabled,
+      pendingTXs: miningInfo.result.pooledtx,
+    });
+  } catch (e: any) {
+    res.json(e);
+  }
+});
     });
   } catch (e: any) {
     res.json(e);
