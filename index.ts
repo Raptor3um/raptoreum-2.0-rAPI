@@ -36,7 +36,6 @@ app.get("/blockInfo", async (req, res) => {
     return;
   }
 
-  // how many H/s one "diff" is
   try {
     const currentHeight: number = parseInt(
       (
@@ -65,6 +64,7 @@ app.get("/blockInfo", async (req, res) => {
       params: [blockHash, 1],
     });
     res.json({
+      success: true,
       hash: blockInfo.result.hash,
       confirmations: blockInfo.result.confirmations,
       size: blockInfo.result.size,
@@ -99,6 +99,7 @@ app.get("/blockchainInfo", async (req, res) => {
       method: "getmininginfo",
     });
     res.json({
+      success: true,
       height: miningInfo.result.blocks,
       difficulty: miningInfo.result.difficulty,
       hashrate:
@@ -129,6 +130,7 @@ app.get("/locked", async (req, res) => {
     });
 
     res.json({
+      success: true,
       totalLockedCoins: `${
         smartnodeInfo.result.total * SMARTNODE_COLLATERAL
       } / ${(
