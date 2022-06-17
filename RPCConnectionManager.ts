@@ -6,8 +6,8 @@ import post, { AxiosRequestConfig } from "axios";
 import InternalRPCException from "./interfaces/InternalRPCException";
 
 export default class RPCConnectionManager {
-  primaryConnection: RPCConnection;
-  backupConnection: RPCConnection;
+  private primaryConnection: RPCConnection;
+  private backupConnection: RPCConnection;
 
   constructor(
     primaryConnection: RPCConnection,
