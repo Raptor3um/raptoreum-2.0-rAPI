@@ -17,9 +17,7 @@ export default class RPCConnectionManager {
     this.backupConnection = backupConnection;
   }
 
-  async sendRequest(
-    params: RPCRequest
-  ): Promise<RPCResponse | void | InternalRPCException> {
+  async sendRequest(params: RPCRequest): Promise<RPCResponse> {
     let requestConfig: AxiosRequestConfig = {
       url: `${this.primaryConnection.protocol}://${this.primaryConnection.hostname}:${this.primaryConnection.port}`,
       method: "POST",
@@ -39,8 +37,7 @@ export default class RPCConnectionManager {
       };
     } catch (e: any) {
       if (!e.code) {
-        console.error(e);
-        return;
+        throw new Error(`unknown error ${e.message ? e.message : undefined}`);
       }
       console.warn(
         "Primary daemon connection is unavailable, trying backup..."
@@ -57,10 +54,9 @@ export default class RPCConnectionManager {
         };
       } catch (e: any) {
         if (!e.code) {
-          console.error(e);
-          return;
+          throw new Error(`Unkown error ${e.message ? e.message : undefined}`);
         }
-        return new InternalRPCException("DAEMONS_UNAVAILABLE");
+        throw new InternalRPCException("DAEMONS_UNAVAILABLE");
       }
     }
   }

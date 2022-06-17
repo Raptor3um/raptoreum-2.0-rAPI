@@ -10,5 +10,5 @@ export default interface RPCRequest {
     jsonrpc?: number,
     id?: string,
     method: string,
-    params?: object
+    params?: Array<any> | object
 }
