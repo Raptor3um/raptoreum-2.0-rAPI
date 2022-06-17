@@ -115,6 +115,26 @@ app.get("/blockchainInfo", async (req, res) => {
     res.json(e);
   }
 });
+
+app.get("/locked", async (req, res) => {
+  try {
+    const totalRTM = (
+      await rpcConnectionManager.sendRequest({
+        method: "gettxoutsetinfo",
+      })
+    ).result.total_amount;
+    const smartnodeInfo = await rpcConnectionManager.sendRequest({
+      method: "smartnode",
+      params: ["count"],
+    });
+
+    res.json({
+      totalLockedCoins: `${
+        smartnodeInfo.result.total * SMARTNODE_COLLATERAL
+      } / ${(
+        ((smartnodeInfo.result.total * SMARTNODE_COLLATERAL) / totalRTM) *
+        100
+      ).toFixed(2)}%`,
     });
   } catch (e: any) {
     res.json(e);
