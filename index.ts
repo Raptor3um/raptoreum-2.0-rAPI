@@ -186,7 +186,57 @@ app.get("/txInfo", async (req, res) => {
 
   res.json({
     sucess: true,
-    ...await parseTransaction(req.query.txHash.toString()),
+    ...(await parseTransaction(req.query.txHash.toString())),
+  });
+});
+
+app.get("/lastNTransactions", async (req, res) => {
+  if (
+    !req.query.txNum ||
+    !parseInt(req.query.txNum.toString()) ||
+    parseInt(req.query.txNum.toString()) < 1
+  ) {
+    res.status(400).json({
+      success: false,
+      reason: "Number of transactions to query is invalid",
+    });
+    return;
+  }
+
+  const transactions: string[] = [];
+  const txNum = parseInt(req.query.txNum.toString(), 10);
+  const bestBlockHash = (
+    await rpcConnectionManager.sendRequest({ method: "getbestblockhash" })
+  ).result;
+  let searchBlockHeight = (
+    await rpcConnectionManager.sendRequest({
+      method: "getblock",
+      params: [bestBlockHash],
+    })
+  ).result.height;
+
+  while (transactions.length < txNum) {
+    const blockHash = (
+      await rpcConnectionManager.sendRequest({
+        method: "getblockhash",
+        params: [searchBlockHeight],
+      })
+    ).result;
+    const block = (
+      await rpcConnectionManager.sendRequest({
+        method: "getblock",
+        params: [blockHash],
+      })
+    ).result;
+    for (let i = 0; i < block.tx.length; i += 1)
+      if (transactions.length === txNum) break;
+      else transactions.push(block.tx[i]);
+    searchBlockHeight -= 1;
+  }
+
+  res.json({
+    success: true,
+    transactions: transactions,
   });
 });
 
