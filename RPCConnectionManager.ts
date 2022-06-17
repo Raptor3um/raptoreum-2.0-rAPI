@@ -21,9 +21,9 @@ export default class RPCConnectionManager {
     let requestConfig: AxiosRequestConfig = {
       url: `${this.primaryConnection.protocol}://${this.primaryConnection.hostname}:${this.primaryConnection.port}`,
       method: "POST",
-      data: JSON.stringify(params),
+      data: params,
       headers: {
-        "Content-Type": "text/plain",
+        "Content-Type": "application/json",
         Accept: "application/json",
       },
       auth: this.primaryConnection.user,
