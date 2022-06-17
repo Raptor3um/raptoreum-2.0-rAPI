@@ -24,7 +24,11 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/blockInfo", async (req, res) => {
-  if (!req.query.height || !parseInt(req.query.height.toString()) || parseInt(req.query.height.toString()) < 0) {
+  if (
+    !req.query.height ||
+    !parseInt(req.query.height.toString()) ||
+    parseInt(req.query.height.toString()) < 0
+  ) {
     res.status(400).json({
       success: false,
       reason: "Failed to provide valid required parameter `height`",
@@ -34,22 +38,28 @@ app.get("/blockInfo", async (req, res) => {
 
   // how many H/s one "diff" is
   try {
-    const currentHeight: number = parseInt((await rpcConnectionManager.sendRequest({
-      method: 'getblockcount'
-    })).result);
+    const currentHeight: number = parseInt(
+      (
+        await rpcConnectionManager.sendRequest({
+          method: "getblockcount",
+        })
+      ).result
+    );
 
     if (currentHeight < parseInt(req.query.height.toString())) {
       res.status(400).json({
         success: false,
-        reason: "block height provided was too high"
+        reason: "block height provided was too high",
       });
       return;
     }
 
-    const blockHash = (await rpcConnectionManager.sendRequest({
+    const blockHash = (
+      await rpcConnectionManager.sendRequest({
       method: "getblockhash",
       params: [parseInt(req.query.height.toString())],
-    })).result;
+      })
+    ).result;
     const blockInfo = await rpcConnectionManager.sendRequest({
       method: "getblock",
       params: [blockHash, 1],
@@ -58,7 +68,7 @@ app.get("/blockInfo", async (req, res) => {
       hash: blockInfo.result.hash,
       confirmations: blockInfo.result.confirmations,
       size: blockInfo.result.size,
-      // weight: 0, // not sure if that's a thing with this RPC endpoint
+      // weight: 0, // can't find an RPC with this data
       height: blockInfo.result.height,
       version: blockInfo.result.version,
       versionHex: blockInfo.result.versionHex,
@@ -68,10 +78,17 @@ app.get("/blockInfo", async (req, res) => {
       bits: blockInfo.result.bits,
       difficulty: blockInfo.result.difficulty,
       chainwork: blockInfo.result.chainwork,
-      // "strippedsize": 0, // not sure if that's a thing with this RPC endpoint
+      // "strippedsize": 0, // can't find an RPC with this data
       merkleroot: blockInfo.result.merkleroot,
       mediantime: blockInfo.result.mediantime,
       previousblockhash: blockInfo.result.previousblockhash,
+      nextblockhash: blockInfo.result.nextblockhash,
+    });
+  } catch (e: any) {
+    res.json(e);
+  }
+});
+
 app.get("/blockchainInfo", async (req, res) => {
   try {
     const smartnodeInfo = await rpcConnectionManager.sendRequest({
