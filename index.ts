@@ -1,4 +1,5 @@
 import express from "express";
+import Transaction from "./interfaces/Transaction";
 import RPCConnectionManager from "./RPCConnectionManager";
 const app = express();
 const port: Number = 3000;
@@ -141,6 +142,52 @@ app.get("/locked", async (req, res) => {
   } catch (e: any) {
     res.json(e);
   }
+});
+
+async function parseTransaction(
+  txhash: string
+): Promise<Transaction | { error: string }> {
+  const transactionData = await rpcConnectionManager.sendRequest({
+    method: "getrawtransaction",
+    params: [txhash, true], // true == be verbose (describe the transaction in JSON)
+  });
+  const blockHeight = (
+    await rpcConnectionManager.sendRequest({
+      method: "getblock",
+      params: [transactionData.result.blockhash],
+    })
+  ).result.height;
+
+  const ret: Transaction = {
+    hash: transactionData.result.hash,
+    size: transactionData.result.size,
+    version: transactionData.result.version,
+    locktime: transactionData.result.locktime,
+    hex: transactionData.result.hex,
+    blockhash: transactionData.result.blockHash,
+    blockheight: blockHeight,
+    confirmations: transactionData.result.confirmations,
+    timestamp: transactionData.result.time,
+    inputs: [],
+    outputs: [],
+  };
+  // TODO: Add parsing for inputs and outputs
+  return ret;
+}
+
+app.get("/txInfo", async (req, res) => {
+  if (!req.query.txHash) {
+    res.status(400).json({
+      success: false,
+      reason: "Failed to provide required parameter `txHash`",
+    });
+    return;
+  }
+
+  res.json({
+    sucess: true,
+    ...await parseTransaction(req.query.txHash.toString()),
+  });
 });
 
 app.listen(port, () => {
