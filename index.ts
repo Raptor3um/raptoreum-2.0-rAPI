@@ -122,5 +122,5 @@ app.get("/blockchainInfo", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Raptoreum 2.0 REST API v1.0.0 listening on port ${port}`);
 });
