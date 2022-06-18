@@ -19,7 +19,7 @@ export default class RPCConnectionManager {
 
   async sendRequest(params: RPCRequest): Promise<RPCResponse> {
     let requestConfig: AxiosRequestConfig = {
-      url: `${this.primaryConnection.protocol}://${this.primaryConnection.hostname}:${this.primaryConnection.port}`,
+      url: this.primaryConnection.connectionURL,
       method: "POST",
       data: params,
       headers: {
@@ -43,7 +43,7 @@ export default class RPCConnectionManager {
         "Primary daemon connection is unavailable, trying backup..."
       );
 
-      requestConfig.url = `${this.backupConnection.protocol}://${this.backupConnection.hostname}:${this.backupConnection.port}`;
+      requestConfig.url = this.backupConnection.connectionURL;
       requestConfig.auth = this.backupConnection.user;
       try {
         const res = await post(requestConfig);
