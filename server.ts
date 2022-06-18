@@ -88,7 +88,7 @@ app.get("/blockInfo", async (req, res) => {
       nextblockhash: blockInfo.result.nextblockhash,
     });
   } catch (e: any) {
-    res.json(e);
+    res.status(500).json(e);
   }
 });
 
@@ -116,7 +116,7 @@ app.get("/blockchainInfo", async (req, res) => {
       pendingTXs: miningInfo.result.pooledtx,
     });
   } catch (e: any) {
-    res.json(e);
+    res.status(500).json(e);
   }
 });
 
@@ -142,7 +142,7 @@ app.get("/locked", async (req, res) => {
       ).toFixed(2)}%`,
     });
   } catch (e: any) {
-    res.json(e);
+    res.status(500).json(e);
   }
 });
 
@@ -156,73 +156,85 @@ async function parseInput(
     };
   }
 
-  // don't use parseTransaction! That will create a recursive loop
-  const transaction: RPCResponse = await rpcConnectionManager.sendRequest({
-    method: "getrawtransaction",
-    params: [input.txid, true],
-  });
+  try {
+    // don't use parseTransaction! That will create a recursive loop
+    const transaction: RPCResponse = await rpcConnectionManager.sendRequest({
+      method: "getrawtransaction",
+      params: [input.txid, true],
+    });
 
-  return {
-    address: transaction.result.vout[input.vout].scriptPubKey.addresses[0],
-    amount: transaction.result.vout[input.vout].value,
-  };
+    return {
+      address: transaction.result.vout[input.vout].scriptPubKey.addresses[0],
+      amount: transaction.result.vout[input.vout].value,
+    };
+  } catch (e: any) {
+    return { address: "Failed to fetch", amount: -1 };
+  }
 }
 
 async function parseTransaction(
   txhash: string
 ): Promise<Transaction | { error: string }> {
-  const transactionData = await rpcConnectionManager.sendRequest({
-    method: "getrawtransaction",
-    params: [txhash, true], // true == be verbose (describe the transaction in JSON)
-  });
-  const blockHeight = (
-    await rpcConnectionManager.sendRequest({
-      method: "getblock",
-      params: [transactionData.result.blockhash],
-    })
-  ).result.height;
-
-  const inputs: { address: string; amount: number }[] = [];
-  for (let i = 0; i < transactionData.result.vin.length; i++) {
-    inputs.push(await parseInput(transactionData.result.vin[i]));
-  }
-
-  const outputs: { address: string; amount: number }[] = [];
-  for (let i = 0; i < transactionData.result.vout.length; i++) {
-    outputs.push({
-      address: transactionData.result.vout[i].scriptPubKey.addresses[0],
-      amount: transactionData.result.vout[i].value, // amount of RTM (not ruffs)!
+  try {
+    const transactionData = await rpcConnectionManager.sendRequest({
+      method: "getrawtransaction",
+      params: [txhash, true], // true == be verbose (describe the transaction in JSON)
     });
-  }
+    const blockHeight = (
+      await rpcConnectionManager.sendRequest({
+        method: "getblock",
+        params: [transactionData.result.blockhash],
+      })
+    ).result.height;
 
-  return {
-    hash: transactionData.result.hash,
-    size: transactionData.result.size,
-    version: transactionData.result.version,
-    locktime: transactionData.result.locktime,
-    hex: transactionData.result.hex,
-    blockhash: transactionData.result.blockHash,
-    blockheight: blockHeight,
-    confirmations: transactionData.result.confirmations,
-    timestamp: transactionData.result.time,
-    inputs: inputs,
-    outputs: outputs,
-  };
+    const inputs: { address: string; amount: number }[] = [];
+    for (let i = 0; i < transactionData.result.vin.length; i++) {
+      inputs.push(await parseInput(transactionData.result.vin[i]));
+    }
+
+    const outputs: { address: string; amount: number }[] = [];
+    for (let i = 0; i < transactionData.result.vout.length; i++) {
+      outputs.push({
+        address: transactionData.result.vout[i].scriptPubKey.addresses[0],
+        amount: transactionData.result.vout[i].value, // amount of RTM (not ruffs)!
+      });
+    }
+
+    return {
+      hash: transactionData.result.hash,
+      size: transactionData.result.size,
+      version: transactionData.result.version,
+      locktime: transactionData.result.locktime,
+      hex: transactionData.result.hex,
+      blockhash: transactionData.result.blockHash,
+      blockheight: blockHeight,
+      confirmations: transactionData.result.confirmations,
+      timestamp: transactionData.result.time,
+      inputs: inputs,
+      outputs: outputs,
+    };
+  } catch (e: any) {
+    return { error: "Failed to parse transaction" };
+  }
 }
 
 app.get("/txInfo", async (req, res) => {
-  if (!req.query.txHash) {
-    res.status(400).json({
-      success: false,
-      reason: "Failed to provide required parameter `txHash`",
-    });
-    return;
-  }
+  try {
+    if (!req.query.txHash) {
+      res.status(400).json({
+        success: false,
+        reason: "Failed to provide required parameter `txHash`",
+      });
+      return;
+    }
 
-  res.json({
-    sucess: true,
-    ...(await parseTransaction(req.query.txHash.toString())),
-  });
+    res.json({
+      sucess: true,
+      ...(await parseTransaction(req.query.txHash.toString())),
+    });
+  } catch (e: any) {
+    res.status(500).json(e);
+  }
 });
 
 app.get("/lastNTransactions", async (req, res) => {
@@ -240,43 +252,48 @@ app.get("/lastNTransactions", async (req, res) => {
 
   const transactions: string[] = [];
   const txNum = parseInt(req.query.txNum.toString(), 10);
-  const bestBlockHash = (
-    await rpcConnectionManager.sendRequest({ method: "getbestblockhash" })
-  ).result;
-  let searchBlockHeight = (
-    await rpcConnectionManager.sendRequest({
-      method: "getblock",
-      params: [bestBlockHash],
-    })
-  ).result.height;
 
-  while (transactions.length < txNum) {
-    const blockHash = (
-      await rpcConnectionManager.sendRequest({
-        method: "getblockhash",
-        params: [searchBlockHeight],
-      })
+  try {
+    const bestBlockHash = (
+      await rpcConnectionManager.sendRequest({ method: "getbestblockhash" })
     ).result;
-    const block = (
+    let searchBlockHeight = (
       await rpcConnectionManager.sendRequest({
         method: "getblock",
-        params: [blockHash],
+        params: [bestBlockHash],
       })
-    ).result;
-    for (let i = 0; i < block.tx.length; i += 1)
-      if (transactions.length === txNum) break;
-      else transactions.push(block.tx[i]);
-    searchBlockHeight -= 1;
-  }
+    ).result.height;
 
-  res.json({
-    success: true,
-    transactions: transactions,
-  });
+    while (transactions.length < txNum) {
+      const blockHash = (
+        await rpcConnectionManager.sendRequest({
+          method: "getblockhash",
+          params: [searchBlockHeight],
+        })
+      ).result;
+      const block = (
+        await rpcConnectionManager.sendRequest({
+          method: "getblock",
+          params: [blockHash],
+        })
+      ).result;
+      for (let i = 0; i < block.tx.length; i += 1)
+        if (transactions.length === txNum) break;
+        else transactions.push(block.tx[i]);
+      searchBlockHeight -= 1;
+    }
+
+    res.json({
+      success: true,
+      transactions: transactions,
+    });
+  } catch (e: any) {
+    res.status(500).json(e);
+  }
 });
 
 app.listen(env.API_PORT, () => {
-  console.log(
+  console.info(
     `Raptoreum 2.0 REST API v1.0.0 listening on port ${env.API_PORT}`
   );
 });
