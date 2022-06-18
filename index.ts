@@ -1,4 +1,6 @@
 import express from "express";
+import RawInput from "./interfaces/RawInput";
+import RPCResponse from "./interfaces/RPCResponse";
 import Transaction from "./interfaces/Transaction";
 import RPCConnectionManager from "./RPCConnectionManager";
 const app = express();
@@ -56,8 +58,8 @@ app.get("/blockInfo", async (req, res) => {
 
     const blockHash = (
       await rpcConnectionManager.sendRequest({
-      method: "getblockhash",
-      params: [parseInt(req.query.height.toString())],
+        method: "getblockhash",
+        params: [parseInt(req.query.height.toString())],
       })
     ).result;
     const blockInfo = await rpcConnectionManager.sendRequest({
@@ -144,6 +146,28 @@ app.get("/locked", async (req, res) => {
   }
 });
 
+async function parseInput(
+  input: RawInput
+): Promise<{ address: string; amount: number }> {
+  if (input.coinbase) {
+    return {
+      address: "coinbase",
+      amount: -1,
+    };
+  }
+
+  // don't use parseTransaction! That will create a recursive loop
+  const transaction: RPCResponse = await rpcConnectionManager.sendRequest({
+    method: "getrawtransaction",
+    params: [input.txid, true]
+  });
+
+  return {
+    address: transaction.result.vout[input.vout].scriptPubKey.addresses[0],
+    amount: transaction.result.vout[input.vout].value
+  }
+}
+
 async function parseTransaction(
   txhash: string
 ): Promise<Transaction | { error: string }> {
@@ -158,7 +182,20 @@ async function parseTransaction(
     })
   ).result.height;
 
-  const ret: Transaction = {
+  const inputs: { address: string; amount: number }[] = [];
+  for (let i = 0; i < transactionData.result.vin.length; i++) {
+    inputs.push(await parseInput(transactionData.result.vin[i]));
+  }
+
+  const outputs: { address: string; amount: number }[] = [];
+  for (let i = 0; i < transactionData.result.vout.length; i++) {
+    outputs.push({
+      address: transactionData.result.vout[i].scriptPubKey.addresses[0],
+      amount: transactionData.result.vout[i].value, // amount of RTM (not ruffs)!
+    });
+  }
+
+  return {
     hash: transactionData.result.hash,
     size: transactionData.result.size,
     version: transactionData.result.version,
@@ -168,11 +205,9 @@ async function parseTransaction(
     blockheight: blockHeight,
     confirmations: transactionData.result.confirmations,
     timestamp: transactionData.result.time,
-    inputs: [],
-    outputs: [],
+    inputs: inputs,
+    outputs: outputs,
   };
-  // TODO: Add parsing for inputs and outputs
-  return ret;
 }
 
 app.get("/txInfo", async (req, res) => {
