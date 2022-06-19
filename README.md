@@ -20,3 +20,5 @@
     BACKUP_CREDENTIALS=<BACKUP_USERNAME>:<BACKUP_PASSWORD>
     ```
 1. Start the server: `node index.js`
+
+## [API Documentation](API_DOCS.md)
