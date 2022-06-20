@@ -3,6 +3,7 @@ import RawInput from "./interfaces/RawInput";
 import RPCResponse from "./interfaces/RPCResponse";
 import Transaction from "./interfaces/Transaction";
 import RPCConnectionManager from "./RPCConnectionManager";
+import { readFileSync } from 'fs';
 import { env } from "./env";
 const app = express();
 const SMARTNODE_COLLATERAL: number = 1_800_000; // 1.8M RTM to run a masternode
@@ -25,7 +26,7 @@ const rpcConnectionManager: RPCConnectionManager = new RPCConnectionManager(
 );
 
 app.get("/", async (req, res) => {
-  res.send("Please see documentation on usage");
+  res.send(readFileSync("./usage.html").toString());
 });
 
 app.get("/blockInfo", async (req, res) => {
