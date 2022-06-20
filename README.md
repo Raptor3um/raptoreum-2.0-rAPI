@@ -13,7 +13,7 @@
     - See format below for file contents:
     ```
     API_PORT=<LISTENING_PORT>
-    # you can also use an API address!
+    # you can also use an IP address!
     PRIMARY_CONNECTION_URL=http://example.com:9998
     PRIMARY_CREDENTIALS=<PRIMARY_USERNAME>:<PRIMARY_PASSWORD>
     BACKUP_CONNECTION_URL=http://backup.example.com:9998
