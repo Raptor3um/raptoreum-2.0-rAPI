@@ -1,4 +1,4 @@
-import RPCUser from "./RPCUser";
+import RPCUser from "./RPCUser.js";
 
 export default interface RPCConnection {
     connectionURL: string,

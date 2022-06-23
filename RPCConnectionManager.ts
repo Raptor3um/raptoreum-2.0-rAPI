@@ -1,9 +1,9 @@
-import RPCRequest from "./interfaces/RPCRequest";
-import RPCResponse from "./interfaces/RPCResponse";
-import RPCConnection from "./interfaces/RPCConnection";
+import RPCRequest from "./interfaces/RPCRequest.js";
+import RPCResponse from "./interfaces/RPCResponse.js";
+import RPCConnection from "./interfaces/RPCConnection.js";
 
-import post, { AxiosRequestConfig } from "axios";
-import InternalRPCException from "./interfaces/InternalRPCException";
+import fetch from "node-fetch";
+import InternalRPCException from "./interfaces/InternalRPCException.js";
 
 export default class RPCConnectionManager {
   private primaryConnection: RPCConnection;
@@ -18,22 +18,25 @@ export default class RPCConnectionManager {
   }
 
   async sendRequest(params: RPCRequest): Promise<RPCResponse> {
-    let requestConfig: AxiosRequestConfig = {
-      url: this.primaryConnection.connectionURL,
-      method: "POST",
-      data: params,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      auth: this.primaryConnection.user,
-    };
     try {
-      const res = await post(requestConfig);
+      const res: any = await (
+        await fetch(this.primaryConnection.connectionURL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": `Basic ${Buffer.from(
+              `${this.primaryConnection.user.username}:${this.primaryConnection.user.password}`,
+              "binary"
+            ).toString("base64")}`,
+          },
+          body: JSON.stringify(params),
+        })
+      ).json();
       return {
-        result: res.data.result,
-        error: res.data.error,
-        id: res.data.id,
+        result: res.result,
+        error: res.error,
+        id: res.id,
       };
     } catch (e: any) {
       if (!e.code) {
@@ -43,14 +46,25 @@ export default class RPCConnectionManager {
         "Primary daemon connection is unavailable, trying backup..."
       );
 
-      requestConfig.url = this.backupConnection.connectionURL;
-      requestConfig.auth = this.backupConnection.user;
       try {
-        const res = await post(requestConfig);
+        const res: any = await (
+          await fetch(this.backupConnection.connectionURL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: Buffer.from(
+                `${this.backupConnection.user.username}:${this.backupConnection.user.password}`,
+                "binary"
+              ).toString("base64"),
+            },
+            body: JSON.stringify(params),
+          })
+        ).json();
         return {
-          result: res.data.result,
-          error: res.data.error,
-          id: res.data.id,
+          result: res.result,
+          error: res.error,
+          id: res.id,
         };
       } catch (e: any) {
         if (!e.code) {

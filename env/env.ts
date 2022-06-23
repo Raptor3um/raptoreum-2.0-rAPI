@@ -10,8 +10,4 @@ export const schema = {
     BACKUP_CREDENTIALS: String
 };
  
-export let env: Env;
- 
-export function loadEnv(): void {
-    env = load(schema);
-}
+export const env: Env = load(schema, "env/.env");
