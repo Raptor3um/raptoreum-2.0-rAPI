@@ -5,6 +5,8 @@ import RPCConnection from "./interfaces/RPCConnection.js";
 import fetch from "node-fetch";
 import InternalRPCException from "./interfaces/InternalRPCException.js";
 
+import { env } from "./env/env.js";
+
 export default class RPCConnectionManager {
   private primaryConnection: RPCConnection;
   private backupConnection: RPCConnection;
@@ -75,3 +77,20 @@ export default class RPCConnectionManager {
     }
   }
 }
+
+export const rpcConnectionManager: RPCConnectionManager = new RPCConnectionManager(
+  {
+    connectionURL: env.PRIMARY_CONNECTION_URL,
+    user: {
+      username: env.PRIMARY_CREDENTIALS.split(":")[0],
+      password: env.PRIMARY_CREDENTIALS.split(":")[1],
+    },
+  },
+  {
+    connectionURL: env.BACKUP_CONNECTION_URL,
+    user: {
+      username: env.BACKUP_CREDENTIALS.split(":")[0],
+      password: env.BACKUP_CREDENTIALS.split(":")[1],
+    },
+  }
+);
