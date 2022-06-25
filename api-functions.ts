@@ -32,7 +32,6 @@ export async function blockInfo(height: number) {
     params: [blockHash, 1],
   });
   return {
-    success: true,
     hash: blockInfo.result.hash,
     confirmations: blockInfo.result.confirmations,
     size: blockInfo.result.size,
@@ -61,7 +60,6 @@ export async function blockchainInfo() {
     method: "getmininginfo",
   });
   return {
-    success: true,
     height: miningInfo.result.blocks,
     difficulty: miningInfo.result.difficulty,
     hashrate:
@@ -88,7 +86,6 @@ export async function locked() {
   });
 
   return {
-    success: true,
     totalLockedCoins: `${
       smartnodeInfo.result.total * SMARTNODE_COLLATERAL
     } / ${(
@@ -172,7 +169,6 @@ async function parseTransaction(
 
 export async function txInfo(txhash: string) {
   return {
-    sucess: true,
     ...(await parseTransaction(txhash)),
   };
 }

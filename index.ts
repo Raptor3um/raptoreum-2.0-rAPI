@@ -24,7 +24,10 @@ app.get("/blockInfo", async (req, res) => {
   }
 
   try {
-    res.json(await blockInfo(parseInt(req.query.height.toString())));
+    res.json({
+      success: true,
+      ...(await blockInfo(parseInt(req.query.height.toString())))
+    });
   } catch (e: any) {
     res.status(500).json(e);
   }
@@ -32,7 +35,10 @@ app.get("/blockInfo", async (req, res) => {
 
 app.get("/blockchainInfo", async (req, res) => {
   try {
-    res.json(await blockchainInfo());
+    res.json({
+      success: true,
+      ...(await blockchainInfo())
+    });
   } catch (e: any) {
     res.status(500).json(e);
   }
@@ -40,7 +46,10 @@ app.get("/blockchainInfo", async (req, res) => {
 
 app.get("/locked", async (req, res) => {
   try {
-    res.json(await locked());
+    res.json({
+      success: true,
+      ...(await locked())
+    });
   } catch (e: any) {
     res.status(500).json(e);
   }
@@ -56,7 +65,10 @@ app.get("/txInfo", async (req, res) => {
   }
 
   try {
-    res.json(await txInfo(req.query.txHash.toString()));
+    res.json({
+      success: true,
+      ...(await txInfo(req.query.txHash.toString()))
+    });
   } catch (e: any) {
     res.status(500).json(e);
   }
