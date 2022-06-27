@@ -24,27 +24,12 @@ export async function populateBlockchainInfoCache() {
 
   const blockchainInfoRepository = client.fetchRepository(blockchainInfoSchema);
 
-  // remove existing cache entry to save on memory (no longer will be used anyway)
-  try {
-    /*const infos = await blockchainInfoRepository
-      .search()
-      .where("height")
-      .greaterThanOrEqualTo(-1)
-      .return.all();
-    console.log(infos.toString());
-    await map(infos, async (info) => {
-      await blockchainInfoRepository.remove(info.entityId);
-    });*/
-  } catch (e: any) {
-    console.log("Error when removing previous blockchain infos:");
-    console.log(e);
-  }
-
   try {
     await add(blockchainInfoRepository, await blockchainInfo());
   } catch (e: any) {
     console.log(`Failed to populate blockchain info cache: \n\n${e}`);
   }
+  
   await client.close();
   console.log("Done!");
 }
