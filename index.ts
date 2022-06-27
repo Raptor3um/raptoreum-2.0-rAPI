@@ -1,10 +1,22 @@
 import express from "express";
 import { rpcConnectionManager } from "./RPCConnectionManager.js";
 import { env } from "./env/env.js";
+import * as redis_env from "./env/redis-env.js";
 import { readFileSync } from "fs";
 import { blockchainInfo, blockInfo, locked, txInfo } from "./api-functions.js";
+import { Client } from "redis-om";
+import { populateBlockchainInfoCache, populateLatestBlocksCache } from "./redis-helpers.js";
 
 const app = express();
+
+// remove previous cache
+const client = new Client();
+await client.open(`redis://${redis_env.env.REDIS_HOST}`);
+client.execute(["flushall"]);
+await client.close();
+
+// populate Redis cache
+await Promise.all([populateBlockchainInfoCache(), populateLatestBlocksCache()]);
 
 app.get("/", async (req, res) => {
   res.send(readFileSync("./usage.html").toString());
