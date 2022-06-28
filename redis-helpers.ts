@@ -29,7 +29,7 @@ export async function populateBlockchainInfoCache() {
   } catch (e: any) {
     console.log(`Failed to populate blockchain info cache: \n\n${e}`);
   }
-  
+
   await client.close();
   console.log("Done!");
 }
@@ -46,9 +46,9 @@ export async function populateLatestBlocksCache() {
   try {
     const currentHeight = (
       await rpcConnectionManager.sendRequest({
-        method: "getblockchaininfo",
+        method: "getblockcount",
       })
-    ).result.blocks;
+    ).result;
     const latestBlocksRepository = client.fetchRepository(blockSchema);
     const promises: Promise<any>[] = [];
 
