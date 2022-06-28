@@ -23,6 +23,7 @@ export async function populateBlockchainInfoCache() {
   await client.open(`redis://${env.REDIS_HOST}`);
 
   const blockchainInfoRepository = client.fetchRepository(blockchainInfoSchema);
+  blockchainInfoRepository.createIndex();
 
   try {
     await add(blockchainInfoRepository, await blockchainInfo());
@@ -50,6 +51,7 @@ export async function populateLatestBlocksCache() {
       })
     ).result;
     const latestBlocksRepository = client.fetchRepository(blockSchema);
+    latestBlocksRepository.createIndex();
     const promises: Promise<any>[] = [];
 
     for (let i = 0; i < env.LATEST_BLOCKS_CACHE_NUM; i++) {
