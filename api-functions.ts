@@ -1,3 +1,5 @@
+import Block from "./interfaces/Block.js";
+import BlockchainInfo from "./interfaces/BlockchainInfo.js";
 import RawInput from "./interfaces/RawInput.js";
 import RPCResponse from "./interfaces/RPCResponse.js";
 import Transaction from "./interfaces/Transaction.js";
@@ -5,22 +7,7 @@ import { rpcConnectionManager } from "./RPCConnectionManager.js";
 
 const SMARTNODE_COLLATERAL: number = 1_800_000; // 1.8M RTM to run a masternode
 
-export async function blockInfo(height: number) {
-  const currentHeight: number = parseInt(
-    (
-      await rpcConnectionManager.sendRequest({
-        method: "getblockcount",
-      })
-    ).result
-  );
-
-  if (currentHeight < parseInt(height.toString())) {
-    return {
-      success: false,
-      reason: "block height provided was too high",
-    };
-  }
-
+export async function blockInfo(height: number): Promise<Block> {
   const blockHash = (
     await rpcConnectionManager.sendRequest({
       method: "getblockhash",
@@ -51,7 +38,7 @@ export async function blockInfo(height: number) {
   };
 }
 
-export async function blockchainInfo() {
+export async function blockchainInfo(): Promise<BlockchainInfo> {
   const smartnodeInfo = await rpcConnectionManager.sendRequest({
     method: "smartnode",
     params: ["count"],

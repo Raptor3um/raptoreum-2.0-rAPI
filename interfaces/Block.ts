@@ -1,0 +1,18 @@
+export default interface Block {
+    hash: string,
+    confirmations: number,
+    size: number,
+    height: number,
+    version: number,
+    versionHex: string,
+    tx: string[],
+    time: number,
+    nonce: number,
+    bits: string,
+    difficulty: number,
+    chainwork: string,
+    merkleroot: string,
+    mediantime: number,
+    previousblockhash: string | null,
+    nextblockhash: string | null,
+}

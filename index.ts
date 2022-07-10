@@ -4,19 +4,21 @@ import { env } from "./env/env.js";
 import * as redis_env from "./env/redis-env.js";
 import { readFileSync } from "fs";
 import { blockchainInfo, blockInfo, locked, txInfo } from "./api-functions.js";
-import { Client } from "redis-om";
-import { populateBlockchainInfoCache, populateLatestBlocksCache } from "./redis-helpers.js";
+import { createClient } from "redis";
+import { blockchainInfoCache, blockInfoCache, populateBlockchainInfoCache, populateLatestBlocksCache } from "./redis-helpers.js";
 
 const app = express();
 
-// remove previous cache
-const client = new Client();
-await client.open(`redis://${redis_env.env.REDIS_HOST}`);
-client.execute(["flushall"]);
-await client.close();
+let client = createClient({
+  url: `redis://${redis_env.env.REDIS_HOST}`
+});
+await client.connect();
 
+// remove previous cache
+await client.sendCommand(["flushall"]);
 // populate Redis cache
-await Promise.all([populateBlockchainInfoCache(), populateLatestBlocksCache()]);
+await Promise.all([populateBlockchainInfoCache(client), populateLatestBlocksCache(client)]);
+await client.quit();
 
 app.get("/", async (req, res) => {
   res.send(readFileSync("./usage.html").toString());
@@ -35,25 +37,50 @@ app.get("/blockInfo", async (req, res) => {
     return;
   }
 
+  const currentHeight: number = parseInt(
+    (
+      await rpcConnectionManager.sendRequest({
+        method: "getblockcount",
+      })
+    ).result
+  );
+  if (currentHeight < parseInt(req.query.height.toString())) {
+    return {
+      success: false,
+      reason: "block height provided was too high",
+    };
+  }
+
   try {
+    await client.connect();
+    let storedBlock = await blockInfoCache(client, parseInt(req.query.height.toString()));
+    if (!storedBlock) {
+      storedBlock = await blockInfo(parseInt(req.query.height.toString()));
+    }
+
     res.json({
       success: true,
-      ...(await blockInfo(parseInt(req.query.height.toString())))
+      ...storedBlock,
     });
+    await client.quit();
   } catch (e: any) {
     res.status(500).json(e);
   }
 });
 
 app.get("/blockchainInfo", async (req, res) => {
+  await client.connect();
+  let chainInfo = await blockchainInfoCache(client);
+  if (!chainInfo) chainInfo = await blockchainInfo();
   try {
     res.json({
       success: true,
-      ...(await blockchainInfo())
+      ...chainInfo,
     });
   } catch (e: any) {
     res.status(500).json(e);
   }
+  await client.quit();
 });
 
 app.get("/locked", async (req, res) => {
@@ -143,6 +170,6 @@ app.get("/lastNTransactions", async (req, res) => {
 
 app.listen(env.API_PORT, () => {
   console.info(
-    `Raptoreum 2.0 REST API v1.0.0 listening on port ${env.API_PORT}`
+    `Raptoreum 2.0 REST API v1.1.0 listening on port ${env.API_PORT}`
   );
 });
