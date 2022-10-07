@@ -26,10 +26,13 @@ const rpcConnectionManager: RPCConnectionManager = new RPCConnectionManager(
 );
 
 app.get("/", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
   res.send(readFileSync("./usage.html").toString());
 });
 
 app.get("/blockInfo", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+
   if (
     !req.query.height ||
     !parseInt(req.query.height.toString()) ||
@@ -94,6 +97,8 @@ app.get("/blockInfo", async (req, res) => {
 });
 
 app.get("/blockchainInfo", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+
   try {
     const smartnodeInfo = await rpcConnectionManager.sendRequest({
       method: "smartnode",
@@ -122,6 +127,8 @@ app.get("/blockchainInfo", async (req, res) => {
 });
 
 app.get("/locked", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+
   try {
     const totalRTM = (
       await rpcConnectionManager.sendRequest({
@@ -220,6 +227,8 @@ async function parseTransaction(
 }
 
 app.get("/txInfo", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+
   try {
     if (!req.query.txHash) {
       res.status(400).json({
@@ -239,6 +248,8 @@ app.get("/txInfo", async (req, res) => {
 });
 
 app.get("/lastNTransactions", async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+
   if (
     !req.query.txNum ||
     !parseInt(req.query.txNum.toString()) ||
