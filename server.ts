@@ -3,8 +3,14 @@ import RawInput from "./interfaces/RawInput";
 import RPCResponse from "./interfaces/RPCResponse";
 import Transaction from "./interfaces/Transaction";
 import RPCConnectionManager from "./RPCConnectionManager";
-import { readFileSync } from 'fs';
+import { readFileSync } from "fs";
 import { env } from "./env";
+import { loadEnv } from "./env";
+import axios from "axios";
+import InternalRPCException from "./interfaces/InternalRPCException";
+
+loadEnv();
+
 const app = express();
 const SMARTNODE_COLLATERAL: number = 1_800_000; // 1.8M RTM to run a masternode
 
@@ -92,7 +98,10 @@ app.get("/blockInfo", async (req, res) => {
       nextblockhash: blockInfo.result.nextblockhash,
     });
   } catch (e: any) {
-    res.status(500).json(e);
+    res.status(500).json({
+      success: false,
+      ...e
+    });
   }
 });
 
@@ -107,6 +116,10 @@ app.get("/blockchainInfo", async (req, res) => {
     const miningInfo = await rpcConnectionManager.sendRequest({
       method: "getmininginfo",
     });
+    const marketCapData = <any>(
+      (await axios.get("https://api.coingecko.com/api/v3/coins/raptoreum")).data
+        .market_data.market_cap
+    );
     res.json({
       success: true,
       height: miningInfo.result.blocks,
@@ -120,9 +133,13 @@ app.get("/blockchainInfo", async (req, res) => {
       totalSmartnodes: smartnodeInfo.result.total,
       enabledSmartnodes: smartnodeInfo.result.enabled,
       pendingTXs: miningInfo.result.pooledtx,
+      marketCap: { usd: marketCapData.usd, btc: marketCapData.btc },
     });
   } catch (e: any) {
-    res.status(500).json(e);
+    res.status(500).json({
+      success: false,
+      ...e
+    });
   }
 });
 
@@ -150,7 +167,10 @@ app.get("/locked", async (req, res) => {
       ).toFixed(2)}%`,
     });
   } catch (e: any) {
-    res.status(500).json(e);
+    res.status(500).json({
+      success: false,
+      ...e
+    });
   }
 });
 
@@ -222,7 +242,8 @@ async function parseTransaction(
       outputs: outputs,
     };
   } catch (e: any) {
-    return { error: "Failed to parse transaction" };
+    if (e.name) throw new InternalRPCException(e.name);
+    return { error: "unknown error occured while parsing transaction" };
   }
 }
 
@@ -243,7 +264,10 @@ app.get("/txInfo", async (req, res) => {
       ...(await parseTransaction(req.query.txHash.toString())),
     });
   } catch (e: any) {
-    res.status(500).json(e);
+    res.status(500).json({
+      success: false,
+      ...e
+    });
   }
 });
 
@@ -300,7 +324,10 @@ app.get("/lastNTransactions", async (req, res) => {
       transactions: transactions,
     });
   } catch (e: any) {
-    res.status(500).json(e);
+    res.status(500).json({
+      success: false,
+      ...e
+    });
   }
 });
 
