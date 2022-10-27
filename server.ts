@@ -116,6 +116,14 @@ app.get("/blockchainInfo", async (req, res) => {
     const miningInfo = await rpcConnectionManager.sendRequest({
       method: "getmininginfo",
     });
+    const blockHash = await rpcConnectionManager.sendRequest({
+      method: "getblockhash",
+      params: [miningInfo.result.blocks]
+    });
+    const blockInfo = await rpcConnectionManager.sendRequest({
+      method: "getblock",
+      params: [blockHash.result, 1]
+    });
     const marketCapData = <any>(
       (await axios.get("https://api.coingecko.com/api/v3/coins/raptoreum")).data
         .market_data.market_cap
@@ -129,7 +137,7 @@ app.get("/blockchainInfo", async (req, res) => {
           notation: "compact",
           maximumFractionDigits: 3,
         }).format(miningInfo.result.networkhashps) + "H/s",
-      currentBlockSize: miningInfo.result.currentblocksize,
+      currentBlockSize: blockInfo.result.size,
       totalSmartnodes: smartnodeInfo.result.total,
       enabledSmartnodes: smartnodeInfo.result.enabled,
       pendingTXs: miningInfo.result.pooledtx,
